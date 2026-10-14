@@ -10,6 +10,7 @@ import {
 } from 'three';
 import { Appearance, EYE_COLORS, HAIR_COLORS, HairLook, ITEM, Pattern, SKIN_TONES, SkinLook } from '../meta/data';
 import { canvasTex, toon } from '../engine/gfx';
+import { mergeGeometries } from 'three/examples/jsm/utils/BufferGeometryUtils.js';
 import { BODY_OFF, JOINTS, Joint, Pose } from './pose';
 
 // ── shared geometry (built once) ─────────────────────────────────────────────
@@ -264,6 +265,8 @@ export class Rig {
     }
 
     this.buildHead(skin, hair, iris, opts.referee ?? false);
+    // collapse static parts into one mesh per material per joint (big draw-call saving)
+    this.root.traverse((o) => { if ((o as Group).isGroup || o === this.root) bake(o); });
   }
 
   private buildHead(skin: MeshToonMaterial, hair: MeshToonMaterial, iris: MeshToonMaterial, referee: boolean) {
@@ -384,8 +387,9 @@ export class Rig {
     for (const e of this.eyes) e.scale.y = ey;
     this.mouth.scale.set(1, this.pain > 0 ? 2.2 : 1, 1);
     if (this.flashV > 0) {
-      this.flashV = Math.max(0, this.flashV - dt * 7);
-      for (const b of this.flashBase) { b.m.emissive.copy(b.e).lerp(WHITE, this.flashV); b.m.emissiveIntensity = Math.max(b.i, this.flashV * 0.9); }
+      this.flashV = Math.max(0, this.flashV - dt * 9);
+      const f = this.flashV * 0.55;
+      for (const b of this.flashBase) { b.m.emissive.copy(b.e).lerp(WHITE, f); b.m.emissiveIntensity = Math.max(b.i, f); }
     }
   }
 
@@ -397,6 +401,7 @@ export class Rig {
 
   dispose() {
     this.root.removeFromParent();
+    this.root.traverse((o) => { const m = o as Mesh; if (m.isMesh && m.geometry.userData.baked) m.geometry.dispose(); });
     for (const m of this.ownMats) m.dispose();
   }
 }
@@ -493,4 +498,32 @@ function buildHair(H: Group, style: string, mat: MeshToonMaterial, cy: number, r
       cap(true);
   }
   void rig;
+}
+
+const baked = new WeakSet<Object3D>();
+function bake(group: Object3D) {
+  if (baked.has(group)) return;
+  baked.add(group);
+  const byMat = new Map<Material, Mesh[]>();
+  for (const c of group.children) {
+    const m = c as Mesh;
+    if (!m.isMesh || Array.isArray(m.material)) continue;
+    const list = byMat.get(m.material as Material) ?? [];
+    list.push(m);
+    byMat.set(m.material as Material, list);
+  }
+  for (const [mat, list] of byMat) {
+    if (list.length < 2) continue;
+    const geos = list.map((m) => {
+      m.updateMatrix();
+      const g = m.geometry.index ? m.geometry.clone() : m.geometry.clone();
+      return g.applyMatrix4(m.matrix);
+    });
+    const merged = mergeGeometries(geos);
+    for (const g of geos) g.dispose();
+    if (!merged) continue;
+    merged.userData.baked = true;
+    for (const m of list) group.remove(m);
+    group.add(new Mesh(merged, mat));
+  }
 }

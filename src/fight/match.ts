@@ -538,7 +538,7 @@ export class Match {
     const d = this.w.director;
     d.set({ mode: 'close', target: () => f.rig.chestWorld(t1), facing: () => f.yaw, dist: 2.8, angle: 0.7, height: 0.35, cut: true, hold: 0.5, fov: 40 });
     setTimeout(() => { if (this.phase === 'fight') d.set({ mode: 'side', angle: f.yaw + Math.PI / 2, dist: 5.4, height: 1.6, hold: Math.max(0.6, m.clip.dur - 0.4), cut: true }); }, 380);
-    this.w.arena.setDim(0.4);
+    this.w.arena.setDim(0.25);
     setTimeout(() => this.w.arena.setDim(0), 1400);
     this.w.fx.burst(f.rig.chestWorld(t1), m.fx ?? 'spark', 0.9);
     this.w.fx.shock(f.pos, 0xffffff, 1.8, 0.4, 0.6);
@@ -553,7 +553,7 @@ export class Match {
     this.cineLock = 0.5;
     if (!m.pair) { o.setState('stunned'); o.vel.set(0, 0, 0); o.anim.play(C.tired, { hold: true, rate: 0.6 }); }
     o.invuln = 0;
-    this.w.arena.setDim(0.85);
+    this.w.arena.setDim(0.6);
     this.slow(0.8, 1.2);
     const d = this.w.director;
     d.autoEnabled = false;

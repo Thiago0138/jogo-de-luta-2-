@@ -435,6 +435,27 @@ export function redeemTradeCode(code: string): { ok: true; item: OwnedItem } | {
   }
 }
 
+// ── Promo codes ──────────────────────────────────────────────────────────────
+const PROMOS: Record<string, () => void> = {
+  'LENDA-TOTAL': () => {
+    for (const it of ITEMS) if (!owns(it.id)) addItem(it.id, 'promo');
+    for (const c of CONSUMABLES) save.consumables[c.id] = (save.consumables[c.id] ?? 0) + 20;
+    for (const id of Object.keys(CHEST)) save.chests[id] = (save.chests[id] ?? 0) + 3;
+    save.coins += 50000;
+    save.gems += 5000;
+  },
+};
+export function redeemPromo(code: string): boolean {
+  const key = code.trim().toUpperCase();
+  const fn = PROMOS[key];
+  if (!fn || save.tradeRedeemed.includes('promo:' + key)) return false;
+  save.tradeRedeemed.push('promo:' + key);
+  fn();
+  emitChange();
+  persist(true);
+  return true;
+}
+
 export const rarityTier = (r: Rarity) => RARITY[r].tier;
 export const rarityList = RARITIES;
 

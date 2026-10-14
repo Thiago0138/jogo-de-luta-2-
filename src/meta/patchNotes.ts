@@ -3,6 +3,19 @@ export interface PatchNote { version: string; date: string; title: string; items
 
 export const PATCH_NOTES: PatchNote[] = [
   {
+    version: '1.0.1',
+    date: '2026-10-14',
+    title: 'Ecrã estável e mais leve',
+    items: [
+      '<b>Corrigido o ecrã a piscar</b>: a resolução adaptativa já não oscila nem apaga frames ao ajustar-se.',
+      'Flashes de ecrã dos Super Ataques muito mais suaves; menos cortes bruscos de câmara; flashes do público mais discretos.',
+      'Raios de energia redesenhados (feixes suaves em vez de colunas brancas).',
+      '<b>Personagens até 3x mais leves</b> de desenhar: as peças de cada lutador são agora fundidas por material.',
+      'Novo campo de <b>Código promocional</b> nas Definições.',
+      'Corrigido o Irish Whip (atirar às cordas) que por vezes não lançava o adversário.',
+    ],
+  },
+  {
     version: '1.0.0',
     date: '2026-10-14',
     title: 'Abertura do Ringue!',

@@ -2,7 +2,7 @@
 import { sfx } from '../../engine/audio';
 import { ITEM, RARITY, Reward } from '../../meta/data';
 import { PATCH_NOTES, CURRENT_VERSION } from '../../meta/patchNotes';
-import { createTradeCode, emitChange, isEquipped, persist, redeemTradeCode, resetSave, save, countOwned } from '../../meta/save';
+import { createTradeCode, emitChange, isEquipped, persist, redeemPromo, redeemTradeCode, resetSave, save, countOwned } from '../../meta/save';
 import type { App } from '../app';
 import { chestArt, COIN, confirmModal, GEM, h, ICON, itemArt, modal, rarityChip, rarityVars, rewardChips, svg, toast } from '../dom';
 import { ensureHubStage } from './common';
@@ -29,6 +29,13 @@ export function settingsScreen(app: App, onQuality: (q: 'auto' | 'low' | 'medium
     el.addEventListener('change', () => { persist(); sfx.ui(); });
     return el;
   };
+  function promoRow() {
+    const input = h('input', { class: 'text-input', placeholder: 'CÓDIGO', style: 'font-size:16px;height:44px;text-transform:uppercase' }) as HTMLInputElement;
+    return h('div', { class: 'setting' }, input, h('button', { class: 'btn sm green', onclick: () => {
+      if (redeemPromo(input.value)) { sfx.ui('level'); toast('Código ativado! Tudo desbloqueado.', ICON.sparkles); input.value = ''; }
+      else { sfx.ui('error'); toast('Código inválido.', ICON.close); }
+    } }, 'Ativar'));
+  }
   function render() {
     const q = (['auto', 'low', 'medium', 'high'] as const);
     const qn = { auto: 'Auto', low: 'Baixa', medium: 'Média', high: 'Alta' };
@@ -41,6 +48,8 @@ export function settingsScreen(app: App, onQuality: (q: 'auto' | 'low' | 'medium
       h('div', { class: 'setting' }, h('div', { class: 'lbl' }, 'Efeitos'), range(s.sfx, (v) => { s.sfx = v; })),
       h('div', { class: 'setting' }, h('div', { class: 'lbl' }, 'Música'), range(s.music, (v) => { s.music = v; })),
       h('div', { class: 'setting' }, h('div', { class: 'lbl' }, 'Vibração'), toggle(s.vibrate, () => { s.vibrate = !s.vibrate; })),
+      h('div', { class: 'section-title' }, 'Código promocional'),
+      promoRow(),
       h('div', { class: 'section-title' }, 'Conta'),
       h('div', { class: 'setting' }, h('div', { class: 'lbl' }, 'Apagar progresso', h('div', { class: 'tiny muted' }, 'Recomeça do zero. Não pode ser desfeito.')),
         h('button', { class: 'btn sm primary', onclick: () => confirmModal('Apagar tudo?', 'Vais perder o teu lutador, itens e progresso.', 'Apagar', () => { resetSave(); location.reload(); }, true) }, 'Apagar')),

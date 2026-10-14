@@ -167,9 +167,9 @@ export class Director {
     let acc = 0, idx = 0;
     for (let i = 0; i < weights.length; i++) { acc += weights[i]; if (r <= acc) { idx = i; break; } }
     const shot = choices[idx];
-    shot.cut = Math.random() < 0.6;
+    shot.cut = Math.random() < 0.2;
     this.set(shot);
-    this.autoT = 4 + Math.random() * 5;
+    this.autoT = 7 + Math.random() * 6;
   }
 
   private sx = 0;

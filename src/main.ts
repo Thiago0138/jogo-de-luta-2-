@@ -6,7 +6,7 @@ import '@fontsource-variable/rubik/wght.css';
 import './styles/main.css';
 import { sfx } from './engine/audio';
 import { createWorld } from './engine/world';
-import { checkLogin, refreshPeriodic, save } from './meta/save';
+import { checkLogin, redeemPromo, refreshPeriodic, save } from './meta/save';
 import { App } from './ui/app';
 import { chestsScreen } from './ui/screens/chests';
 import { collectionScreen } from './ui/screens/collection';
@@ -48,6 +48,16 @@ const unlock = () => {
 window.addEventListener('pointerdown', unlock);
 
 refreshPeriodic();
+// ?promo=CODE in the URL redeems a promo code once
+{
+  const url = new URL(location.href);
+  const promo = url.searchParams.get('promo');
+  if (promo) {
+    redeemPromo(promo);
+    url.searchParams.delete('promo');
+    history.replaceState(null, '', url.pathname + url.search + url.hash);
+  }
+}
 app.go(save.created ? 'hub' : 'creator');
 
 // render loop — pauses with the tab, lighter frame pacing in menus on low quality
@@ -59,8 +69,8 @@ function frame(now: number) {
   if (world.gfx.quality === 'low' && app.current !== 'fight') { skip = !skip; if (skip) return; }
   last = now;
   app.update(dt);
+  world.gfx.sample(dt, now); // may resize the canvas: always render right after
   world.gfx.render();
-  world.gfx.sample(dt, now);
 }
 requestAnimationFrame((t) => { last = t; frame(t); });
 
@@ -79,3 +89,6 @@ requestAnimationFrame(() => {
 if ('serviceWorker' in navigator && import.meta.env.PROD) {
   window.addEventListener('load', () => navigator.serviceWorker.register('/sw.js').catch(() => {}));
 }
+
+// dev-only handle for automated visual checks
+if (import.meta.env.DEV) import('./fight/moves').then((m) => { (window as unknown as Record<string, unknown>).__game = { app, world, save, moves: m.MOVES, C: m.C }; });

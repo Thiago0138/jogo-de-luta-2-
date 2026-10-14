@@ -163,7 +163,7 @@ export class Fx {
   }
 
   pillar(pos: Vector3, color: number, radius: number, height: number, dur: number, opacity = 0.6) {
-    const m = new Mesh(this.pillarGeo, new MeshBasicMaterial({ color, transparent: true, opacity, blending: AdditiveBlending, depthWrite: false, side: DoubleSide }));
+    const m = new Mesh(this.pillarGeo, pillarMaterial(color, opacity * 0.85));
     m.position.copy(pos);
     m.scale.set(radius, height, radius);
     this.root.add(m);
@@ -250,7 +250,7 @@ export class Fx {
       const e = this.timed[i];
       e.t += dt;
       const k = e.t / e.dur;
-      const mat = e.mesh.material as MeshBasicMaterial;
+      const mat = e.mesh.material as MeshBasicMaterial | ShaderMaterial;
       if (k >= 1) {
         this.root.remove(e.mesh);
         mat.dispose();
@@ -259,8 +259,12 @@ export class Fx {
         continue;
       }
       if (e.kind === 'ring') { const s = e.s0 + (e.s1 - e.s0) * (1 - Math.pow(1 - k, 3)); e.mesh.scale.set(s, s, s); mat.opacity = e.op * (1 - k); }
-      else if (e.kind === 'pillar') { const s = e.s0 + (e.s1 - e.s0) * k; e.mesh.scale.x = e.mesh.scale.z = s; mat.opacity = e.op * (1 - k * k); }
-      else { mat.opacity = Math.random() < 0.3 ? 0.3 : 1 - k; }
+      else if (e.kind === 'pillar') {
+        const s = e.s0 + (e.s1 - e.s0) * k;
+        e.mesh.scale.x = e.mesh.scale.z = s;
+        (e.mesh.material as ShaderMaterial).uniforms.uOpacity.value = e.op * 0.85 * Math.min(1, k * 8) * (1 - k * k);
+      }
+      else { (mat as MeshBasicMaterial).opacity = 1 - k; }
     }
   }
 
@@ -269,4 +273,29 @@ export class Fx {
     for (const e of this.timed) { this.root.remove(e.mesh); (e.mesh.material as MeshBasicMaterial).dispose(); if (e.kind === 'bolt') e.mesh.geometry.dispose(); }
     this.timed.length = 0;
   }
+}
+
+/** energy beam: bright at the silhouette edges and the base, fading upward */
+function pillarMaterial(color: number, opacity: number) {
+  return new ShaderMaterial({
+    transparent: true, depthWrite: false, blending: AdditiveBlending, side: DoubleSide,
+    uniforms: { uColor: { value: new Color(color) }, uOpacity: { value: opacity } },
+    vertexShader: /* glsl */ `
+      varying vec2 vUv; varying float vFres;
+      void main(){
+        vUv = uv;
+        vec4 mv = modelViewMatrix * vec4(position, 1.0);
+        vec3 n = normalize(normalMatrix * normal);
+        vFres = 1.0 - abs(dot(n, normalize(-mv.xyz)));
+        gl_Position = projectionMatrix * mv;
+      }`,
+    fragmentShader: /* glsl */ `
+      uniform vec3 uColor; uniform float uOpacity;
+      varying vec2 vUv; varying float vFres;
+      void main(){
+        float up = pow(1.0 - vUv.y, 1.6);
+        float a = uOpacity * up * (0.12 + pow(vFres, 1.5) * 0.9);
+        gl_FragColor = vec4(uColor * (1.0 + up * 0.6), a);
+      }`,
+  });
 }

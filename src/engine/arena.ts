@@ -242,7 +242,7 @@ export class Arena {
           vec3 right = vec3(toCam.z, 0.0, -toCam.x);
           vec3 pos = world.xyz + right * position.x + vec3(0.0, position.y + jump, 0.0);
           float f = hash(aPhase * 77.0 + floor(uTime * 6.0));
-          vFlash = step(0.9985 - uExcite * 0.003, f);
+          vFlash = step(0.9993 - uExcite * 0.0008, f);
           vec4 mv = viewMatrix * vec4(pos, 1.0);
           vFogDepth = -mv.z;
           gl_Position = projectionMatrix * mv;
@@ -262,7 +262,7 @@ export class Arena {
           if (d > 0.0) discard;
           vec3 col = vColor * (0.5 + 0.5 * p.y) * (1.0 - uDim * 0.75);
           col += vColor * 0.6 * smoothstep(0.02, -0.02, d + 0.03) * step(0.62, p.y);
-          col += vec3(1.0) * vFlash * 2.5 * step(0.5, p.y);
+          col += vec3(1.0) * vFlash * 0.9 * step(0.5, p.y);
           float fogF = smoothstep(fogNear, fogFar, vFogDepth);
           gl_FragColor = vec4(mix(col, fogColor, fogF), 1.0);
         }`,

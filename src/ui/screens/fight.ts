@@ -70,7 +70,7 @@ export function fightScreen(app: App, params?: Record<string, unknown>): HTMLEle
     flash(color: string, strength: number) {
       flash.style.transition = 'none';
       flash.style.background = color;
-      flash.style.opacity = String(Math.min(0.9, strength));
+      flash.style.opacity = String(Math.min(0.22, strength * 0.25));
       requestAnimationFrame(() => requestAnimationFrame(() => { flash.style.transition = 'opacity .45s ease-out'; flash.style.opacity = '0'; }));
     },
     phase(p: Match['phase']) {

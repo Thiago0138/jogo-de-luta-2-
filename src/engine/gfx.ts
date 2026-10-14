@@ -57,21 +57,26 @@ export class Gfx {
     this.renderer.setSize(this.width, this.height, false);
   }
 
-  /** Adaptive resolution: keep frame time healthy by trading pixels. */
+  /** Adaptive resolution: trade pixels for frame time. Changes are rare and
+   *  one-directional-biased so the canvas never oscillates (each resize blanks a frame). */
+  private drops = 0;
   sample(dt: number, now: number) {
-    if (!this.auto) return;
+    if (!this.auto || document.hidden) return;
+    if (dt > 0.25) { this.frameTimes.length = 0; return; } // tab switch / hitch, ignore
     this.frameTimes.push(dt);
-    if (this.frameTimes.length > 45) this.frameTimes.shift();
-    if (now - this.lastAdjust < 1500 || this.frameTimes.length < 40) return;
+    if (this.frameTimes.length > 90) this.frameTimes.shift();
+    if (this.frameTimes.length < 90) return;
     const sorted = [...this.frameTimes].sort((a, b) => a - b);
     const p80 = sorted[Math.floor(sorted.length * 0.8)];
-    if (p80 > 1 / 48 && this.scale > 0.55) {
-      this.scale = Math.max(0.55, this.scale - 0.12);
+    const since = now - this.lastAdjust;
+    if (p80 > 1 / 45 && this.scale > 0.6 && since > 3000) {
+      this.scale = Math.max(0.6, this.scale - 0.15);
+      this.drops++;
       this.applySize();
       this.lastAdjust = now;
       this.frameTimes.length = 0;
-    } else if (p80 < 1 / 58 && this.scale < 1) {
-      this.scale = Math.min(1, this.scale + 0.06);
+    } else if (p80 < 1 / 75 && this.scale < 1 && this.drops < 3 && since > 20000) {
+      this.scale = Math.min(1, this.scale + 0.1);
       this.applySize();
       this.lastAdjust = now;
       this.frameTimes.length = 0;
