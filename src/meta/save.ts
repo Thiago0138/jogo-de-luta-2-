@@ -459,4 +459,13 @@ export function redeemPromo(code: string): boolean {
 export const rarityTier = (r: Rarity) => RARITY[r].tier;
 export const rarityList = RARITIES;
 
+/** Test mode: every item unlocked on every launch (new items too). Set to false before public launch. */
+export const UNLOCK_ALL = true;
+
 save = load();
+if (UNLOCK_ALL) {
+  let changed = false;
+  for (const it of ITEMS) if (!owns(it.id)) { addItem(it.id, 'unlock'); changed = true; }
+  if (!save.tradeRedeemed.includes('promo:LENDA-TOTAL')) { PROMOS['LENDA-TOTAL'](); save.tradeRedeemed.push('promo:LENDA-TOTAL'); changed = true; }
+  if (changed) persist(true);
+}

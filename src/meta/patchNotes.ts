@@ -3,6 +3,15 @@ export interface PatchNote { version: string; date: string; title: string; items
 
 export const PATCH_NOTES: PatchNote[] = [
   {
+    version: '1.0.2',
+    date: '2026-10-14',
+    title: 'Modo de teste: tudo desbloqueado',
+    items: [
+      '<b>Todos os itens desbloqueados</b> automaticamente: skins, penteados premium, golpes especiais, supers e passivas.',
+      'Bónus de teste: 20 de cada poção, 3 de cada baú, 50 000 moedas e 5 000 gemas.',
+    ],
+  },
+  {
     version: '1.0.1',
     date: '2026-10-14',
     title: 'Ecrã estável e mais leve',
